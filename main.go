@@ -13,6 +13,7 @@ import (
 )
 
 func hrefs(r io.Reader, base string) []string {
+  // Utilizing html anchor parsing package
   links, _ := link.Parse(r)
   // Variable ret = "return value"
   var ret []string
@@ -70,11 +71,47 @@ func goodPrefix(pfx string) func(string) bool {
   }
 }
 
+func bfs(urlString string, maxDepth int) [] string {
+  // Keep track of all visited webpages, using struct instead of bool bc less memory
+  seenLinks := make(map[string]struct{})
+  // Variable q = queue
+  var q map[string]struct{}
+  // Variable nq = next queue
+  nq := map[string]struct{} {
+    urlString: struct{}{},
+  }
+  for i := 0; i <= maxDepth; i++ {
+    q, nq = nq, make(map[string]struct{})
+    for url, _ := range q {
+      // ok tests to see if a value is found for key in map
+      // If page has already been seem, do nothing
+      if _, ok := seenLinks[url]; ok {
+        continue
+      }
+      seenLinks[url] = struct{}{}
+      for _, link := range get(url) {
+        nq[link] = struct{}{}
+      }
+    }
+  }
+
+  // Optimizing space for ret
+  ret := make([]string, 0, len(seenLinks))
+  for url, _ := range seenLinks{
+    ret = append(ret, url)
+  }
+  return ret
+}
+
 func main() {
   urlFlag := flag.String("url", "https://makeschool.com", "Website for which you want to build a sitemap")
+
+  maxDepth := flag.Int("depth", 3, "Maximum recursion depth when traversing links")
   flag.Parse()
 
-  pages := get(*urlFlag)
+  pages := bfs(*urlFlag, *maxDepth)
+
+  // pages := get(*urlFlag)
   for _, page := range pages {
     fmt.Println(page)
   }
