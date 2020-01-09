@@ -7,10 +7,22 @@ import (
   "net/url"
   "strings"
   "io"
-  // "os"
+  "encoding/xml"
+  "os"
 
   "github.com/alishalabi/link_parser"
 )
+
+const xmlns = "http://www.sitemaps.org/schemas/sitemap/0.9"
+
+type loc struct {
+  Value string `xml:"loc"`
+}
+
+type urlset struct {
+  Urls []loc `xml:"url"`
+  Xmlns string `xml:"xmlns,attr"` // XML namespace
+}
 
 func hrefs(r io.Reader, base string) []string {
   // Utilizing html anchor parsing package
@@ -82,6 +94,9 @@ func bfs(urlString string, maxDepth int) [] string {
   }
   for i := 0; i <= maxDepth; i++ {
     q, nq = nq, make(map[string]struct{})
+    if len(q) == 0 {
+      break
+    }
     for url, _ := range q {
       // ok tests to see if a value is found for key in map
       // If page has already been seem, do nothing
@@ -90,7 +105,9 @@ func bfs(urlString string, maxDepth int) [] string {
       }
       seenLinks[url] = struct{}{}
       for _, link := range get(url) {
-        nq[link] = struct{}{}
+        if _, ok := seenLinks[link]; !ok {
+          nq[link] = struct{}{}
+        }
       }
     }
   }
@@ -105,15 +122,31 @@ func bfs(urlString string, maxDepth int) [] string {
 
 func main() {
   urlFlag := flag.String("url", "https://makeschool.com", "Website for which you want to build a sitemap")
-
   maxDepth := flag.Int("depth", 3, "Maximum recursion depth when traversing links")
   flag.Parse()
 
   pages := bfs(*urlFlag, *maxDepth)
-
-  // pages := get(*urlFlag)
-  for _, page := range pages {
-    fmt.Println(page)
+  toXml := urlset {
+    Xmlns: xmlns,
   }
+  // Append links to toXml
+  for _, page := range pages {
+    toXml.Urls = append(toXml.Urls, loc{page})
+  }
+
+  // Encode to XML
+  fmt.Print(xml.Header) // From xml package
+  encoder := xml.NewEncoder(os.Stdout)
+  encoder.Indent("", " ")
+  if err := encoder.Encode(toXml); err != nil {
+    panic(err)
+  }
+  fmt.Println()
+
+
+  // // pages := get(*urlFlag)
+  // for _, page := range pages {
+  //   fmt.Println(page)
+  // }
 
 }

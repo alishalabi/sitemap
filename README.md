@@ -19,7 +19,7 @@ Please make sure to update tests as appropriate.
 - [x] Refactor code into modular functions
 - [x] Filter links that do not direct to desired domain
 - [x] Recursively search all links using a Breadth First Search
-- [ ] Return sitemap in sharable format (XML)
+- [x] Return sitemap in sharable format (XML)
 
 ## Attribution
 This project and its code structure were heavily influenced by Jon Calhoun's amazing tutorials on gophercises.com
